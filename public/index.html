@@ -4,101 +4,52 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Revision Chatbot</title>
-
   <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
-      max-width: 800px;
-      margin: 30px auto;
-      padding: 0 12px;
-    }
-
-    h1 {
-      text-align: center;
-    }
-
-    #chat {
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 12px;
-      height: 420px;
-      overflow-y: auto;
-      margin-bottom: 12px;
-    }
-
-    .msg {
-      margin-bottom: 10px;
-    }
-
-    .you b {
-      color: #0a66c2;
-    }
-
-    .bot b {
-      color: #0b7;
-    }
-
-    form {
-      display: flex;
-      gap: 8px;
-    }
-
-    input {
-      flex: 1;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-
-    button {
-      padding: 10px 14px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      cursor: pointer;
-    }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; max-width: 900px; margin: 28px auto; padding: 0 12px; }
+    #status { margin: 10px 0 14px; padding: 10px; border: 1px solid #ddd; border-radius: 10px; }
+    #chat { border: 1px solid #ddd; border-radius: 10px; padding: 12px; height: 420px; overflow-y: auto; }
+    .msg { margin: 10px 0; }
+    .you b { color: #0a66c2; }
+    .bot b { color: #0b7; }
+    .err b { color: #c00; }
+    .row { display:flex; gap: 8px; margin-top: 12px; }
+    input { flex: 1; padding: 10px; font-size: 16px; border-radius: 10px; border: 1px solid #ddd; }
+    button { padding: 10px 14px; font-size: 16px; border-radius: 10px; border: 1px solid #ddd; cursor: pointer; }
   </style>
 </head>
 <body>
-
   <h1>AI Revision Chatbot</h1>
+
+  <div id="status">Loading JS…</div>
 
   <div id="chat"></div>
 
-  <form id="form">
-    <input
-      id="input"
-      type="text"
-      placeholder="Ask a revision question…"
-      autocomplete="off"
-    />
-    <button type="submit">Send</button>
-  </form>
+  <div class="row">
+    <input id="q" placeholder="Ask a revision question…" autocomplete="off" />
+    <button id="send" type="button">Send</button>
+  </div>
 
   <script>
+    const statusEl = document.getElementById("status");
     const chat = document.getElementById("chat");
-    const form = document.getElementById("form");
-    const input = document.getElementById("input");
+    const q = document.getElementById("q");
+    const sendBtn = document.getElementById("send");
 
-    function addMessage(type, text) {
+    function add(type, html) {
       const div = document.createElement("div");
       div.className = "msg " + type;
-      div.innerHTML = "<b>" + (type === "you" ? "You" : "Bot") + ":</b> " + text;
+      div.innerHTML = html;
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
     }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const text = input.value.trim();
+    async function send() {
+      const text = q.value.trim();
       if (!text) return;
 
-      addMessage("you", text);
-      input.value = "";
-
-      addMessage("bot", "<i>Thinking…</i>");
+      add("you", "<b>You:</b> " + text);
+      q.value = "";
+      add("bot", "<b>Bot:</b> <i>Thinking…</i>");
 
       try {
         const res = await fetch("/api/chat", {
@@ -107,24 +58,31 @@
           body: JSON.stringify({ message: text })
         });
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          chat.lastChild.innerHTML =
-            "<b>Bot:</b> <span style='color:red'>Error " +
-            res.status + ":</span> " +
-            (data.error || JSON.stringify(data));
+        let data = null;
+        try {
+          data = await res.json();
+        } catch (e) {
+          add("err", "<b>Error:</b> Could not read JSON response from /api/chat");
           return;
         }
 
-        chat.lastChild.innerHTML =
-          "<b>Bot:</b> " +
-          (data.reply || "No reply").replace(/\n/g, "<br>");
+        if (!res.ok) {
+          add("err", "<b>Error " + res.status + ":</b> " + (data.error || JSON.stringify(data)));
+          return;
+        }
 
-      } catch (err) {
-        chat.lastChild.innerHTML =
-          "<b>Bot:</b> <span style='color:red'>Network error:</span> " + err;
+        const reply = data.reply || "No reply";
+        // Replace the "Thinking…" message with the reply:
+        chat.lastChild.innerHTML = "<b>Bot:</b> " + reply.replace(/\n/g, "<br>");
+      } catch (e) {
+        add("err", "<b>Network error:</b> " + String(e));
       }
-    });
-  </s
+    }
 
+    // Prove JS is running:
+    statusEl.textContent = "JS loaded ✅ — you can chat now.";
+    sendBtn.addEventListener("click", send);
+    q.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+  </script>
+</body>
+</html>
