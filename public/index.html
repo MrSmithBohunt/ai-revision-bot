@@ -46,11 +46,26 @@
 
       add("bot", "<i>Thinking…</i>");
 
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text })
-      });
+      try {
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text })
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    chat.lastChild.innerHTML =
+      "<b>Bot:</b> <span style='color:red'>Error " + res.status + ":</span> " +
+      (data.error || JSON.stringify(data));
+    return;
+  }
+
+  chat.lastChild.innerHTML = "<b>Bot:</b> " + (data.reply || "No reply").replace(/\n/g, "<br>");
+} catch (err) {
+  chat.lastChild.innerHTML = "<b>Bot:</b> <span style='color:red'>Network error:</span> " + err;
+}
 
       const data = await res.json();
       chat.lastChild.innerHTML = "<b>Bot:</b> " + (data.reply || "No reply").replace(/\n/g, "<br>");
