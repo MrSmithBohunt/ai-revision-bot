@@ -67,9 +67,7 @@
   chat.lastChild.innerHTML = "<b>Bot:</b> <span style='color:red'>Network error:</span> " + err;
 }
 
-      const data = await res.json();
-      chat.lastChild.innerHTML = "<b>Bot:</b> " + (data.reply || "No reply").replace(/\n/g, "<br>");
-    });
+      
   </script>
 </body>
 </html>
