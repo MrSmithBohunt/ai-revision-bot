@@ -4,70 +4,127 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Revision Chatbot</title>
+
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; max-width: 800px; margin: 30px auto; padding: 0 12px; }
-    #chat { border: 1px solid #ddd; padding: 12px; height: 420px; overflow:auto; border-radius: 10px; }
-    .msg { margin: 10px 0; }
-    .you b { color: #0a66c2; }
-    .bot b { color: #0b7; }
-    form { display:flex; gap: 8px; margin-top: 12px; }
-    input { flex:1; padding: 10px; border-radius: 10px; border:1px solid #ddd; }
-    button { padding: 10px 14px; border-radius: 10px; border:1px solid #ddd; cursor:pointer; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 0 12px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    #chat {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 12px;
+      height: 420px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+
+    .msg {
+      margin-bottom: 10px;
+    }
+
+    .you b {
+      color: #0a66c2;
+    }
+
+    .bot b {
+      color: #0b7;
+    }
+
+    form {
+      display: flex;
+      gap: 8px;
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 14px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
+
   <h1>AI Revision Chatbot</h1>
+
   <div id="chat"></div>
 
-  <form id="f">
-    <input id="q" placeholder="Ask a revision question…" autocomplete="off" />
+  <form id="form">
+    <input
+      id="input"
+      type="text"
+      placeholder="Ask a revision question…"
+      autocomplete="off"
+    />
     <button type="submit">Send</button>
   </form>
 
   <script>
     const chat = document.getElementById("chat");
-    const form = document.getElementById("f");
-    const q = document.getElementById("q");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
 
-    function add(who, text) {
+    function addMessage(type, text) {
       const div = document.createElement("div");
-      div.className = "msg " + who;
-      div.innerHTML = "<b>" + (who === "you" ? "You" : "Bot") + ":</b> " + text;
+      div.className = "msg " + type;
+      div.innerHTML = "<b>" + (type === "you" ? "You" : "Bot") + ":</b> " + text;
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
     }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const text = q.value.trim();
-      if (!text) return;
-      add("you", text);
-      q.value = "";
 
-      add("bot", "<i>Thinking…</i>");
+      const text = input.value.trim();
+      if (!text) return;
+
+      addMessage("you", text);
+      input.value = "";
+
+      addMessage("bot", "<i>Thinking…</i>");
 
       try {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text })
-  });
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text })
+        });
 
-  const data = await res.json().catch(() => ({}));
+        const data = await res.json();
 
-  if (!res.ok) {
-    chat.lastChild.innerHTML =
-      "<b>Bot:</b> <span style='color:red'>Error " + res.status + ":</span> " +
-      (data.error || JSON.stringify(data));
-    return;
-  }
+        if (!res.ok) {
+          chat.lastChild.innerHTML =
+            "<b>Bot:</b> <span style='color:red'>Error " +
+            res.status + ":</span> " +
+            (data.error || JSON.stringify(data));
+          return;
+        }
 
-  chat.lastChild.innerHTML = "<b>Bot:</b> " + (data.reply || "No reply").replace(/\n/g, "<br>");
-} catch (err) {
-  chat.lastChild.innerHTML = "<b>Bot:</b> <span style='color:red'>Network error:</span> " + err;
-}
+        chat.lastChild.innerHTML =
+          "<b>Bot:</b> " +
+          (data.reply || "No reply").replace(/\n/g, "<br>");
 
-      
-  </script>
-</body>
-</html>
+      } catch (err) {
+        chat.lastChild.innerHTML =
+          "<b>Bot:</b> <span style='color:red'>Network error:</span> " + err;
+      }
+    });
+  </s
+
