@@ -5,35 +5,98 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Revision Chatbot</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; max-width: 900px; margin: 28px auto; padding: 0 12px; }
-    #status { margin: 10px 0 14px; padding: 10px; border: 1px solid #ddd; border-radius: 10px; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; max-width: 950px; margin: 28px auto; padding: 0 12px; }
     #chat { border: 1px solid #ddd; border-radius: 10px; padding: 12px; height: 420px; overflow-y: auto; }
     .msg { margin: 10px 0; }
     .you b { color: #0a66c2; }
     .bot b { color: #0b7; }
     .err b { color: #c00; }
-    .row { display:flex; gap: 8px; margin-top: 12px; }
-    input { flex: 1; padding: 10px; font-size: 16px; border-radius: 10px; border: 1px solid #ddd; }
-    button { padding: 10px 14px; font-size: 16px; border-radius: 10px; border: 1px solid #ddd; cursor: pointer; }
+
+    .controls { display: grid; gap: 10px; margin: 12px 0; padding: 12px; border: 1px solid #eee; border-radius: 10px; }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    label { font-weight: 600; }
+    select, input { padding: 10px; font-size: 16px; border-radius: 10px; border: 1px solid #ddd; }
+    #topic { min-width: 260px; }
+
+    .rag { display: flex; gap: 8px; }
+    .rag button { padding: 10px 12px; border-radius: 10px; border: 1px solid #ddd; cursor: pointer; }
+    .rag button[aria-pressed="true"] { outline: 3px solid #333; }
+
+    .sendRow { display:flex; gap: 8px; margin-top: 12px; }
+    #q { flex: 1; }
+    #send { padding: 10px 14px; font-size: 16px; border-radius: 10px; border: 1px solid #ddd; cursor: pointer; }
+    .hint { color: #555; font-size: 14px; margin-top: 6px; }
   </style>
 </head>
 <body>
   <h1>AI Revision Chatbot</h1>
 
-  <div id="status">Loading JS…</div>
+  <div class="controls">
+    <div class="row">
+      <label for="topic">Topic</label>
+      <select id="topic">
+        <option value="OCR A Level CS - Data Structures">OCR A Level CS - Data Structures</option>
+        <option value="OCR A Level CS - Algorithms">OCR A Level CS - Algorithms</option>
+        <option value="OCR A Level CS - Web Technologies">OCR A Level CS - Web Technologies</option>
+        <option value="OCR A Level CS - Systems Software">OCR A Level CS - Systems Software</option>
+        <option value="OCR A Level CS - Networks">OCR A Level CS - Networks</option>
+        <option value="General revision">General revision</option>
+      </select>
+
+      <label style="margin-left:6px;">Confidence (RAG)</label>
+      <div class="rag" role="group" aria-label="RAG confidence selector">
+        <button type="button" id="ragRed"   aria-pressed="false">🔴 Red</button>
+        <button type="button" id="ragAmber" aria-pressed="true">🟠 Amber</button>
+        <button type="button" id="ragGreen" aria-pressed="false">🟢 Green</button>
+      </div>
+    </div>
+
+    <div class="hint">
+      Red = reteach & scaffold · Amber = guided practice · Green = exam-style challenge
+    </div>
+  </div>
 
   <div id="chat"></div>
 
-  <div class="row">
+  <div class="sendRow">
     <input id="q" placeholder="Ask a revision question…" autocomplete="off" />
     <button id="send" type="button">Send</button>
   </div>
 
   <script>
-    const statusEl = document.getElementById("status");
     const chat = document.getElementById("chat");
     const q = document.getElementById("q");
     const sendBtn = document.getElementById("send");
+    const topicEl = document.getElementById("topic");
+
+    const ragButtons = {
+      red: document.getElementById("ragRed"),
+      amber: document.getElementById("ragAmber"),
+      green: document.getElementById("ragGreen")
+    };
+
+    // Persist settings per device
+    let rag = localStorage.getItem("rag") || "amber";
+    let topic = localStorage.getItem("topic") || topicEl.value;
+    topicEl.value = topic;
+
+    function setRag(next) {
+      rag = next;
+      localStorage.setItem("rag", rag);
+      for (const [key, btn] of Object.entries(ragButtons)) {
+        btn.setAttribute("aria-pressed", key === rag ? "true" : "false");
+      }
+    }
+    setRag(rag);
+
+    ragButtons.red.addEventListener("click", () => setRag("red"));
+    ragButtons.amber.addEventListener("click", () => setRag("amber"));
+    ragButtons.green.addEventListener("click", () => setRag("green"));
+
+    topicEl.addEventListener("change", () => {
+      topic = topicEl.value;
+      localStorage.setItem("topic", topic);
+    });
 
     function add(type, html) {
       const div = document.createElement("div");
@@ -47,7 +110,7 @@
       const text = q.value.trim();
       if (!text) return;
 
-      add("you", "<b>You:</b> " + text);
+      add("you", `<b>You:</b> ${text} <span style="color:#666">(${topic}, ${rag.toUpperCase()})</span>`);
       q.value = "";
       add("bot", "<b>Bot:</b> <i>Thinking…</i>");
 
@@ -55,32 +118,23 @@
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text })
+          body: JSON.stringify({ message: text, topic, rag })
         });
 
-        let data = null;
-        try {
-          data = await res.json();
-        } catch (e) {
-          add("err", "<b>Error:</b> Could not read JSON response from /api/chat");
-          return;
-        }
-
+        const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          add("err", "<b>Error " + res.status + ":</b> " + (data.error || JSON.stringify(data)));
+          chat.lastChild.className = "msg err";
+          chat.lastChild.innerHTML = `<b>Error ${res.status}:</b> ${data.error || JSON.stringify(data)}`;
           return;
         }
 
-        const reply = data.reply || "No reply";
-        // Replace the "Thinking…" message with the reply:
-        chat.lastChild.innerHTML = "<b>Bot:</b> " + reply.replace(/\n/g, "<br>");
+        chat.lastChild.innerHTML = "<b>Bot:</b> " + (data.reply || "No reply").replace(/\n/g, "<br>");
       } catch (e) {
-        add("err", "<b>Network error:</b> " + String(e));
+        chat.lastChild.className = "msg err";
+        chat.lastChild.innerHTML = "<b>Network error:</b> " + String(e);
       }
     }
 
-    // Prove JS is running:
-    statusEl.textContent = "JS loaded ✅ — you can chat now.";
     sendBtn.addEventListener("click", send);
     q.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
   </script>
