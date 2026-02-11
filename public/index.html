@@ -6,7 +6,9 @@
   <title>A Level Computer Science AI Revision Chatbot</title>
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; max-width: 950px; margin: 28px auto; padding: 0 12px; }
-    #chat { border: 1px solid #ddd; border-radius: 10px; padding: 12px; height: 420px; overflow-y: auto; }
+    #chat { border: 1px solid #ddd; border-radius: 10px; padding: 12px; height: 420px; overflow-y: auto; background: #fafafa; }
+    #chatHeader { display:flex; align-items:center; gap:8px; margin-bottom:6px; color:#555; font-size:14px; }
+    #chatHeader img { height:24px; }
     .msg { margin: 10px 0; }
     .you b { color: #0a66c2; }
     .bot b { color: #0b7; }
@@ -61,7 +63,12 @@
     </div>
   </div>
 
-  <div id="chat"></div>
+  <div id="chat">
+    <div id="chatHeader">
+      <img src="/assets/logo.png" alt="AI Revision Bot logo" />
+      <span>AI Revision Chatbot</span>
+    </div>
+  </div>
 
   <div class="sendRow">
     <input id="q" placeholder="Ask a revision question…" autocomplete="off" />
