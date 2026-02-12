@@ -5,29 +5,101 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Revision Chatbot</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; max-width: 950px; margin: 28px auto; padding: 0 12px; }
-    #chat { border: 1px solid #ddd; border-radius: 10px; padding: 12px; height: 420px; overflow-y: auto; background: #fafafa; }
-    #chatHeader { display:flex; align-items:center; gap:8px; margin-bottom:6px; color:#555; font-size:14px; }
-    #chatHeader img { height:24px; }
-    .msg { margin: 10px 0; }
-    .you b { color: #0a66c2; }
-    .bot b { color: #0b7; }
-    .err b { color: #c00; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      max-width: 950px;
+      margin: 28px auto;
+      padding: 0 12px 32px;
+      background: radial-gradient(circle at top left, #fef3c7, #eff6ff 40%, #f5f3ff);
+    }
 
-    .controls { display: grid; gap: 10px; margin: 12px 0; padding: 12px; border: 1px solid #eee; border-radius: 10px; }
+    #chat {
+      border: 1px solid #d4d4d8;
+      border-radius: 14px;
+      padding: 12px;
+      height: 420px;
+      overflow-y: auto;
+      background: linear-gradient(135deg, #f9fafb, #eef2ff);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    #chatHeader {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin-bottom:6px;
+      color:#4b5563;
+      font-size:14px;
+    }
+
+    #chatHeader img { height:24px; }
+
+    .msg { margin: 10px 0; }
+    .you b { color: #2563eb; }
+    .bot b { color: #059669; }
+    .err b { color: #dc2626; }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+    }
+
     .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    label { font-weight: 600; }
-    select, input { padding: 10px; font-size: 16px; border-radius: 10px; border: 1px solid #ddd; }
+    label { font-weight: 600; color:#374151; }
+
+    select, input {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+    }
+
     #topic { min-width: 260px; }
 
     .rag { display: flex; gap: 8px; }
-    .rag button { padding: 10px 12px; border-radius: 10px; border: 1px solid #ddd; cursor: pointer; }
-    .rag button[aria-pressed="true"] { outline: 3px solid #333; }
+
+    .rag button {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      cursor: pointer;
+      background:#ffffff;
+      font-size:14px;
+    }
+
+    .rag button[aria-pressed="true"] {
+      outline: 0;
+      border-color:#111827;
+      box-shadow: 0 0 0 2px rgba(17,24,39,0.15);
+    }
 
     .sendRow { display:flex; gap: 8px; margin-top: 12px; }
     #q { flex: 1; }
-    #send { padding: 10px 14px; font-size: 16px; border-radius: 10px; border: 1px solid #ddd; cursor: pointer; }
-    .hint { color: #555; font-size: 14px; margin-top: 6px; }
+
+    #send {
+      padding: 10px 18px;
+      font-size: 16px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+    }
+
+    #send:hover {
+      filter: brightness(1.05);
+    }
+
+    .hint { color: #6b7280; font-size: 14px; margin-top: 6px; }
   </style>
 </head>
 <body>
